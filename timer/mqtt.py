@@ -128,9 +128,9 @@ class TimerMqttService:
                 item: getattr(self.timer_service, item)
             }
         self.logger.debug("publishing payload:{}".format(payload))
-        self.mqtt_client.publish(
+        await self.mqtt_client.publish(
             TimerMqttService.INFO_TOPIC,
-            payload,
+            json.dumps(payload).encode("utf-8"),
             qos=QOS_1
         )
 
@@ -151,7 +151,7 @@ class TimerMqttService:
                 ))
                 if msg.publish_packet.variable_header.topic_name == TimerMqttService.COMMAND_TOPIC:
                     await asyncio.sleep(0)
-                    data = json.dumps(json.loads(msg.publish_packet.payload.data.decode('utf-8')))
+                    data = json.loads(msg.publish_packet.payload.data.decode('utf-8'))
                     self.logger.debug("data: {}".format(data))
                     await self.command_queue.put(data)
                     self.logger.debug("pushing data to the queue size is {}".format(self.command_queue.qsize()))
