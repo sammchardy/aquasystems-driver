@@ -1,29 +1,4 @@
-# Bluetooth LE UART service class.  Provides an easy to use interface to read
-# and write data from a bluezle device that implements the UART service.
-# Author: Tony DiCola
-#
-# Copyright (c) 2015 Adafruit Industries
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-import queue
 import uuid
-import sys
 
 from Adafruit_BluefruitLE.services.servicebase import ServiceBase
 
@@ -45,34 +20,17 @@ RAIN_DELAY_TIME_CHAR_UUID = uuid.UUID('0000fcd6-0000-1000-8000-00805f9b34fb')
 MANUAL_TIME_CHAR_UUID = uuid.UUID('0000fcd9-0000-1000-8000-00805f9b34fb')
 
 # Not Implemented
-#TIMER1_CHAR_UUID = uuid.UUID('0000fcc1-0000-1000-8000-00805f9b34fb')
-
-"""
-0000fcd1-0000-1000-8000-00805f9b34fb
-
-b'a\x01\x01' - off
-b'a\x01\x02' - auto
-b'a\x01\t'  - 9 (manual)
-
- 0000fcd6-0000-1000-8000-00805f9b34fb - 
- 
- Rain Delay in days
- 
- b'f\x01\x03'
-
-b'T\x04\x13/\x1b\x04'
-
- """
+# TIMER1_CHAR_UUID = uuid.UUID('0000fcc1-0000-1000-8000-00805f9b34fb')
 
 
 class Timer(ServiceBase):
-    """Bluetooth LE UART service object."""
+    """Bluetooth LE Aqua Systems water timer service object."""
 
     ATTRIBUTES = {
         'battery': {
             'service': 'battery',
             'uuid': BATTERY_CHAR_UUID,
-            'format': [ # '5'
+            'format': [  # '5'
                 'value'
             ],
             'can_set': False
