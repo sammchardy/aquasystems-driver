@@ -50,7 +50,7 @@ class TimerService(ServiceBase):
         'status': {  # NOTIFY, READ
             # 'a\x01\x01' - off
             # 'a\x01\x02' - auto
-            # 'a\x01\t'  - 9 (manual)
+            # 'a\x01\t'  - 10 (manual)
             'service': 'timer',
             'uuid': STATUS_CHAR_UUID,
             'format': [
