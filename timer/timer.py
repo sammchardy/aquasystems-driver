@@ -130,9 +130,10 @@ class TimerService(ServiceBase):
                 0,
                 'duration'
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': True
         },
-        'rain_delay_time': {
+        'rain_delay_time': {  # NOTIFY, READ, WRITE
             'service': 'timer',
             'uuid': RAIN_DELAY_TIME_CHAR_UUID,
             'format': [  # 'f\x01\x00'
@@ -140,7 +141,8 @@ class TimerService(ServiceBase):
                 1,
                 'duration'
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': True
         }
     }
 
