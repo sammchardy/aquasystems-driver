@@ -27,25 +27,27 @@ class TimerService(ServiceBase):
     """Bluetooth LE Aqua Systems water timer service object."""
 
     ATTRIBUTES = {
-        'battery': {
+        'battery': {  # NOTIFY, READ
             'service': 'battery',
             'uuid': BATTERY_CHAR_UUID,
             'format': [  # '5'
                 'value'
             ],
-            'can_set': False
+            'can_set': False,
+            'can_notify': True
         },
-        'on': {
+        'on': {  # READ
             'service': 'timer',
-            'uuid': TIMER_OFF_CHAR_UUID,
+            'uuid': TIMER_ON_CHAR_UUID,
             'format': [  # 'R\x01\x01'
                 82,
                 1,
                 'on'
             ],
-            'can_set': True
+            'can_set': False,
+            'can_notify': False
         },
-        'status': {
+        'status': {  # NOTIFY, READ
             # 'a\x01\x01' - off
             # 'a\x01\x02' - auto
             # 'a\x01\t'  - 9 (manual)
@@ -56,9 +58,10 @@ class TimerService(ServiceBase):
                 1,
                 'status'
             ],
-            'can_set': True
+            'can_set': False,
+            'can_notify': True
         },
-        'time': {
+        'time': {  # READ, WRITE
             'service': 'timer',
             'uuid': TIME_CHAR_UUID,
             'format': [  # 'T\x04\x15\x17\x04\x04'
@@ -69,9 +72,10 @@ class TimerService(ServiceBase):
                 'seconds',
                 4
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': False
         },
-        'cycle1_start': {
+        'cycle1_start': {  # READ, WRITE
             'service': 'timer',
             'uuid': START_TIME1_CHAR_UUID,
             'format': [  # 'd\x02\x05\x1e'
@@ -80,9 +84,10 @@ class TimerService(ServiceBase):
                 'hours',
                 'mins'
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': False
         },
-        'cycle2_start': {
+        'cycle2_start': {  # READ, WRITE
             'service': 'timer',
             'uuid': START_TIME2_CHAR_UUID,
             'format': [  # 'e\x02\x05\x1e'
@@ -91,9 +96,10 @@ class TimerService(ServiceBase):
                 'hours',
                 'mins'
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': False
         },
-        'cycle_duration': {
+        'cycle_duration': {  # NOTIFY, READ, WRITE
             'service': 'timer',
             'uuid': CYCLE1_DUR_CHAR_UUID,
             'format': [  # 'b\x02\x00\x1d'
@@ -102,9 +108,10 @@ class TimerService(ServiceBase):
                 0,
                 'duration'
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': True
         },
-        'cycle_frequency': {
+        'cycle_frequency': {  # READ, WRITE
             'service': 'timer',
             'uuid': DAY_CYCLE_CHAR_UUID,
             'format': [  # 'c\x03\x00\x04\x7f' - 4 days
@@ -114,9 +121,10 @@ class TimerService(ServiceBase):
                 'days',
                 127
             ],
-            'can_set': True
+            'can_set': True,
+            'can_notify': False
         },
-        'manual_time_left': {
+        'manual_time_left': {  # NOTIFY, READ, WRITE
             # 'i\x03\x00\x00\x05' - off
             # 'i\x03\x01\x00\x05' - on 5 mins
             # 'i\x03\x01\x00\n' - on 10 mins
