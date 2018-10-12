@@ -23,7 +23,7 @@ MANUAL_TIME_CHAR_UUID = uuid.UUID('0000fcd9-0000-1000-8000-00805f9b34fb')
 # TIMER1_CHAR_UUID = uuid.UUID('0000fcc1-0000-1000-8000-00805f9b34fb')
 
 
-class Timer(ServiceBase):
+class TimerService(ServiceBase):
     """Bluetooth LE Aqua Systems water timer service object."""
 
     ATTRIBUTES = {
