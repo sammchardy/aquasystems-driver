@@ -275,3 +275,13 @@ class TimerService(ServiceBase):
         if val[0] == 1:
             return val[1]
         return 0
+
+    @property
+    def all(self):
+        """Return dict of all attributes
+
+        """
+        result = {}
+        for attr in self.ATTRIBUTES:
+            result[attr] = getattr(self, attr)
+        return result
