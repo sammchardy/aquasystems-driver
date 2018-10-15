@@ -10,8 +10,7 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 logging.getLogger().setLevel(logging.DEBUG)
 
-device_name = "Spray-Mist A19E"
-
+device_name = None
 
 # Get the BLE provider for the current platform.
 ble = Adafruit_BluefruitLE.get_provider()
@@ -41,7 +40,7 @@ def main():
     print('Disconnecting any connected Timer devices...')
     TimerService.disconnect_devices()
 
-    # Scan for UART devices.
+    # Scan for devices.
     print('Searching for Timer device...')
     try:
         adapter.start_scan()
@@ -109,6 +108,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Debug the device.')
     parser.add_argument('--device_id', help='ID of Tap Timer device e.g "Spray-Mist A19E"', default="Spray-Mist A19E")
     args = parser.parse_args()
+
+    device_name = args.device_id
 
     # Initialize the BLE system.  MUST be called before other BLE calls!
     ble.initialize()
