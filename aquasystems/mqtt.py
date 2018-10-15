@@ -2,13 +2,6 @@ import asyncio
 import json
 import logging
 import Adafruit_BluefruitLE
-try:
-    from PyObjCTools import AppHelper
-except ImportError:
-    try:
-        from gi.repository import GObject
-    except ImportError:
-        pass
 
 from .timer import TimerService
 from hbmqtt.client import MQTTClient
