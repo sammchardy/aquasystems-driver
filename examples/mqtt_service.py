@@ -11,7 +11,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Run an automated trading bot.')
+    parser = argparse.ArgumentParser(description='Run an MQTT Service.')
     parser.add_argument('--device_id', help='ID of Tap Timer device e.g "Spray-Mist A19E"', default="Spray-Mist A19E")
     parser.add_argument('--broker_url', help='URL for MQTT broker', default="mqtt://127.0.0.1")
     args = parser.parse_args()

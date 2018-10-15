@@ -1,11 +1,11 @@
 import uuid
 
 from Adafruit_BluefruitLE.services.servicebase import ServiceBase
-import Adafruit_BluefruitLE
 
 # Define service and characteristic UUIDs.
 TIMER_SERVICE_UUID = uuid.UUID('0000FCC0-0000-1000-8000-00805F9B34FB')
 BATTERY_SERVICE_UUID = uuid.UUID('0000180f-0000-1000-8000-00805f9b34fb')
+
 BATTERY_CHAR_UUID = uuid.UUID('00002a19-0000-1000-8000-00805f9b34fb')
 
 TIMER_ON_CHAR_UUID = uuid.UUID('0000fcc2-0000-1000-8000-00805f9b34fb')
@@ -251,12 +251,6 @@ class TimerService(ServiceBase):
         """
         s = getattr(self, '_{}'.format(service))
         return s.find_characteristic(uuid)
-
-    def connect(self):
-        pass
-
-    def disconnect(self):
-        pass
 
     @property
     def on(self):
