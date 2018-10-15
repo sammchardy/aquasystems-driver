@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import sys
 import Adafruit_BluefruitLE
 try:
     from PyObjCTools import AppHelper
@@ -12,7 +11,7 @@ except ImportError:
         pass
 
 from .timer import TimerService
-from hbmqtt.client import MQTTClient, ClientException
+from hbmqtt.client import MQTTClient
 from hbmqtt.mqtt.constants import QOS_1
 
 ble = Adafruit_BluefruitLE.get_provider()  # Get the BLE provider for the current platform.
@@ -25,6 +24,11 @@ class TimerMqttService:
 
     COMMAND_TOPIC = '$SYS/broker/aquatimer/command'
     INFO_TOPIC = '$SYS/broker/aquatimer/info'
+    BATTERY_TOPIC = '$SYS/broker/aquatimer/battery'
+
+    ATTR_TOPICS = {
+        'battery': BATTERY_TOPIC
+    }
 
     device_connect_timeout = 10  # seconds
     battery_notify_interval = 1  # minutes
@@ -52,24 +56,22 @@ class TimerMqttService:
             # Clear any cached data because both bluez and CoreBluetooth have issues with
             # caching data and it going stale.
             ble.clear_cached_data()
-            print('Cleared cached data')
 
             # Get the first available BLE network adapter and make sure it's powered on.
             adapter = ble.get_default_adapter()
-            print('got adapter')
             adapter.power_on()
-            print('Using adapter: {0}'.format(adapter.name))
+            self.logger.debug('Using adapter: {0}'.format(adapter.name))
 
             # Disconnect any currently connected UART devices.  Good for cleaning up and
             # starting from a fresh state.
-            print('Disconnecting any connected Timer devices...')
+            self.logger.debug('Disconnecting any connected Timer devices...')
             TimerService.disconnect_devices()
         except Exception as e:
-            print("got error: {}".format(e))
+            self.logger.error("got error: {}".format(e))
             return None
 
             # Scan for device
-            print('Searching for Timer device...')
+            self.logger.debug('Searching for Timer device...')
         try:
             adapter.start_scan()
             # Search for the first UART device found (will time out after 60 seconds
@@ -81,21 +83,23 @@ class TimerMqttService:
             # Make sure scanning is stopped before exiting.
             adapter.stop_scan()
 
-        print('Connecting to device...')
+        self.logger.debug('Connecting to device...')
         self.device.connect()
 
         try:
-            print('Discovering services...')
+            self.logger.debug('Discovering services...')
             TimerService.discover(self.device)
 
-            print('Creating device')
+            self.logger.debug('Creating device')
             self.timer_service = TimerService(self.device)
-            print("test battery_level: {}".format(self.timer_service.battery))
         except Exception as e:
-            print("got error: {}".format(e))
+            self.logger.error("got error: {}".format(e))
 
         # now do things
         self.run_mqtt()
+
+    def stop(self):
+        self.running = False
 
     async def process_command(self, command):
         """Process a command
@@ -118,7 +122,13 @@ class TimerMqttService:
             self.logger.error('publish error: {}'.format(e))
 
     async def publish_item(self, item):
+        """Publish an item to the info topic
 
+        :param item:
+        :return:
+        """
+
+        topic = TimerMqttService.INFO_TOPIC
         if item == 'all':
             # check if we want all attributes
             payload = self.timer_service.all
@@ -127,17 +137,18 @@ class TimerMqttService:
             payload = {
                 item: getattr(self.timer_service, item)
             }
+            # check if we need to send to a specific topic
+            if item in TimerMqttService.ATTR_TOPICS:
+                topic = TimerMqttService.ATTR_TOPICS[item]
         self.logger.debug("publishing payload:{}".format(payload))
         await self.mqtt_client.publish(
-            TimerMqttService.INFO_TOPIC,
+            topic,
             json.dumps(payload).encode("utf-8"),
             qos=QOS_1
         )
 
     async def _producer(self):
-        self.logger.debug("start producer")
         # connect MQTT client
-        #TODO: check if mqtt running if not self._mqtt:
         await self.mqtt_client.connect(self.mqtt_url)
         await self.mqtt_client.subscribe([
             (TimerMqttService.COMMAND_TOPIC, QOS_1),
@@ -185,6 +196,22 @@ class TimerMqttService:
             # wait for 10 minutes
             await asyncio.sleep(60 * self.battery_notify_interval)
 
+    async def _all_notify(self):
+        """Start the loop to notify MQTT of All details
+
+        :return:
+        """
+        # wait a few seconds before starting
+        await asyncio.sleep(5)
+        self.logger.debug("start all notify")
+        while self.running:
+            await asyncio.sleep(0)
+            data = {'cmd': 'get', 'item': 'all'}
+            await self.command_queue.put(data)
+
+            # wait for 10 minutes
+            await asyncio.sleep(60 * self.battery_notify_interval)
+
     def _disconnect_timer_service(self):
         if self.device:
             self.device.disconnect()
@@ -194,6 +221,7 @@ class TimerMqttService:
         cors = asyncio.wait([
             self._consumer(),
             self._producer(),
+            self._all_notify(),
             self._battery_notify()
         ])
         self.loop.run_until_complete(cors)
