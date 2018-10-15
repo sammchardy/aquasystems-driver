@@ -11,6 +11,7 @@ This package includes
 - Home Assistant custom components to display values
 
 TODO:
+
 - Only connect to device as needed
 - Implement Notify option for attributes
 - Allow changing attributes from Home Assistant
