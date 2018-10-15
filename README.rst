@@ -15,7 +15,7 @@ TODO:
 - Implement Notify option for attributes
 - Allow changing attributes from Home Assistant
 - Test on Raspberry Pi
-- Support all functions of the device
+- Support all attributes of the device
 
 .. image:: assets/timer.jpg
 
