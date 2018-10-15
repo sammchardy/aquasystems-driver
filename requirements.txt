@@ -1,0 +1,2 @@
+git+git://github.com/adafruit/Adafruit_Python_BluefruitLE@efaa472f4c97686e1162cacce25c52d77cefc756
+hbmqtt
