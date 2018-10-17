@@ -105,6 +105,7 @@ class TimerMqttService:
         self.logger.debug("disconnecting device")
         if self.device:
             self.device.disconnect()
+            self.device = None
 
     def stop(self):
         """Stop the service
