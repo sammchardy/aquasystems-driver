@@ -161,20 +161,60 @@ class TimerService(ServiceBase):
     SERVICES = [TIMER_SERVICE_UUID, BATTERY_SERVICE_UUID]
     CHARACTERISTICS = [CYCLE1_DUR_CHAR_UUID, TIME_CHAR_UUID]
 
-    def __init__(self, device):
+    def __init__(self, device, notify_callback=None):
         """Initialize Timer from provided device."""
         self.logger = logging.getLogger(__name__)
         self.device = device
         # Find the Timer service and characteristics associated with the device.
         self._timer = self.device.find_service(TIMER_SERVICE_UUID)
         self._battery = self.device.find_service(BATTERY_SERVICE_UUID)
+        self._notify_callback = notify_callback
         if self._timer is None:
             raise RuntimeError('Failed to find expected Timer service!')
         if self._battery is None:
             raise RuntimeError('Failed to find expected Battery service!')
 
-    def __getattr__(self, item):
-        # lookup attribute in array
+        # init notify functions
+        self._init_notify()
+
+    def _init_notify(self):
+
+        self.logger.debug("init notify for attributes")
+        #attr = self.ATTRIBUTES['battery']
+        #char = self._get_characteristic(attr['service'], attr['uuid'])
+        #char.start_notify(functools.partial(self, 'notify_{}'.format('battery')))
+        #char.start_notify(getattr(self, 'notify_{}'.format('battery')))
+
+        for item, attr in self.ATTRIBUTES.items():
+            if attr['can_notify']:
+                char = self._get_characteristic(attr['service'], attr['uuid'])
+                char.start_notify(getattr(self, '_{}_notify'.format(item)))
+
+    def _battery_notify(self, data):
+        self.logger.debug("notify battery data:{}".format(data))
+        return self._notify('battery', data)
+
+    def _status_notify(self, data):
+        self.logger.debug("notify status data:{}".format(data))
+        return self._notify('status', data)
+
+    def _cycle_duration_notify(self, data):
+        self.logger.debug("notify cycle_duration data:{}".format(data))
+        return self._notify('cycle_duration', data)
+
+    def _manual_time_left_notify(self, data):
+        self.logger.debug("notify manual_time_left data:{}".format(data))
+        return self._notify('manual_time_left', data)
+
+    def _rain_delay_time_notify(self, data):
+        self.logger.debug("notify rain_delay_time data:{}".format(data))
+        return self._notify('rain_delay_time', data)
+
+    def _notify(self, item, val):
+        return self._notify_callback(item, self._parse_value(item, val ))
+
+    def __getattr__(self, item, *args):
+
         if item not in self.ATTRIBUTES:
             # check if item is set
             if item in self.__dict__:
