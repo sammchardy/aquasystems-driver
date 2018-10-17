@@ -188,6 +188,8 @@ class TimerService(ServiceBase):
         # read the value
         val = characteristic.read_value()
 
+        return self._parse_value(item, val)
+
         results = []
         idx = 0
         for el in attr['format']:
@@ -216,6 +218,30 @@ class TimerService(ServiceBase):
             return False
 
         return self._write_attr(attr, value)
+
+    def _parse_value(self, item, val):
+        """Parse values from the raw data for an item
+
+        :param item: name of item
+        :param val: raw value
+        :return:
+        """
+
+        # get attribute details from array
+        attr = self.ATTRIBUTES[item]
+
+        results = []
+        idx = 0
+        for el in attr['format']:
+            # save result if it's not a placeholder char
+            if type(el) == str:
+                results.append(val[idx])
+            idx += 1
+
+        # if we only have one result return that, otherwise return list
+        if len(results) == 1:
+            return results[0]
+        return results
 
     def _write_attr(self, attr, value):
         """Helper function to write an attribute using related format array
