@@ -44,7 +44,7 @@ def main():
     print('Searching for Timer device...')
     try:
         adapter.start_scan()
-        # Search for the first UART device found (will time out after 60 seconds
+        # Search for the first device found (will time out after 60 seconds
         # but you can specify an optional timeout_sec parameter to change it).
         device = ble.find_device(name=device_name)
         if device is None:
