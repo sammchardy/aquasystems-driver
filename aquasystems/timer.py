@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from Adafruit_BluefruitLE.services.servicebase import ServiceBase
@@ -162,6 +163,7 @@ class TimerService(ServiceBase):
 
     def __init__(self, device):
         """Initialize Timer from provided device."""
+        self.logger = logging.getLogger(__name__)
         self.device = device
         # Find the Timer service and characteristics associated with the device.
         self._timer = self.device.find_service(TIMER_SERVICE_UUID)
