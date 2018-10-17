@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import functools
 import Adafruit_BluefruitLE
 
 from .timer import TimerService
@@ -27,7 +28,7 @@ class TimerMqttService:
     device_connect_timeout = 10  # seconds
     battery_notify_interval = 1  # minutes
 
-    def __init__(self, mqtt_url, device_name):
+    def __init__(self, mqtt_url, device_name, disconnect_timeout=20):
 
         self.logger = logging.getLogger(__name__)
         self.running = True
@@ -37,6 +38,8 @@ class TimerMqttService:
         self.mqtt_client = MQTTClient()
         self.device_name = device_name
         self.loop = asyncio.get_event_loop()
+        self.disconnect_timeout = disconnect_timeout
+        self._disconnect_call_later = None
 
         self.command_queue = asyncio.Queue(loop=self.loop)
 
@@ -45,6 +48,15 @@ class TimerMqttService:
     def run(self):
         # Initialize the BLE system.  MUST be called before other BLE calls!
         ble.initialize()
+
+        # now do things
+        self._run_mqtt()
+
+    def connect_device(self):
+
+        # check service already exists
+        if self.device:
+            return
 
         try:
             # Clear any cached data because both bluez and CoreBluetooth have issues with
@@ -89,8 +101,10 @@ class TimerMqttService:
         except Exception as e:
             self.logger.error("got error: {}".format(e))
 
-        # now do things
-        self._run_mqtt()
+    def disconnect_device(self):
+        self.logger.debug("disconnecting device")
+        if self.device:
+            self.device.disconnect()
 
     def stop(self):
         """Stop the service
@@ -107,6 +121,13 @@ class TimerMqttService:
         self.logger.debug("processing command: {}".format(command))
 
         try:
+            if self._disconnect_call_later:
+                # cancel it
+                self.logger.debug("Cancelling device disconnect")
+                self._disconnect_call_later.cancel()
+
+            self.connect_device()
+
             if not self.timer_service:
                 self.logger.debug("No device found")
                 return
@@ -120,6 +141,12 @@ class TimerMqttService:
                 await self.publish_item(command['item'])
         except Exception as e:
             self.logger.error('publish error: {}'.format(e))
+        finally:
+            # set timer to disconnect device
+            self._disconnect_call_later = self.loop.call_later(
+                self.disconnect_timeout,
+                functools.partial(self.disconnect_device)
+            )
 
     async def publish_item(self, item):
         """Publish an item to the relevant item topic or info topic as fallback
@@ -213,10 +240,6 @@ class TimerMqttService:
 
             # wait for 10 minutes
             await asyncio.sleep(60 * self.battery_notify_interval)
-
-    def _disconnect_timer_service(self):
-        if self.device:
-            self.device.disconnect()
 
     def _run_mqtt(self):
         """Start MQTT service and other notify loops
