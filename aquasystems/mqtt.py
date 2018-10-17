@@ -11,7 +11,7 @@ ble = Adafruit_BluefruitLE.get_provider()  # Get the BLE provider for the curren
 
 
 class TimerMqttService:
-    """MQTT Service for
+    """MQTT Service for Bluetooth LE Aqua Systems water timer
 
     """
 
@@ -19,6 +19,7 @@ class TimerMqttService:
     INFO_TOPIC = '$SYS/broker/aquatimer/info'
     BATTERY_TOPIC = '$SYS/broker/aquatimer/battery'
 
+    # Dictionary for any attribute specific topics
     ATTR_TOPICS = {
         'battery': BATTERY_TOPIC
     }
@@ -63,8 +64,8 @@ class TimerMqttService:
             self.logger.error("got error: {}".format(e))
             return None
 
-            # Scan for device
-            self.logger.debug('Searching for Timer device...')
+        # Scan for device
+        self.logger.debug('Searching for Timer device...')
         try:
             adapter.start_scan()
             # Search for the first UART device found (will time out after 60 seconds
@@ -89,9 +90,12 @@ class TimerMqttService:
             self.logger.error("got error: {}".format(e))
 
         # now do things
-        self.run_mqtt()
+        self._run_mqtt()
 
     def stop(self):
+        """Stop the service
+
+        """
         self.running = False
 
     async def process_command(self, command):
@@ -118,7 +122,7 @@ class TimerMqttService:
             self.logger.error('publish error: {}'.format(e))
 
     async def publish_item(self, item):
-        """Publish an item to the info topic
+        """Publish an item to the relevant item topic or info topic as fallback
 
         :param item:
         :return:
@@ -126,7 +130,7 @@ class TimerMqttService:
 
         topic = TimerMqttService.INFO_TOPIC
         if item == 'all':
-            # check if we want all attributes
+            # check if we want the all attributes
             payload = self.timer_service.all
         else:
             # otherwise just return one attribute
@@ -151,17 +155,18 @@ class TimerMqttService:
         ])
         while self.running:
             try:
+                # wait for incoming MQTT messages
                 msg = await self.mqtt_client.deliver_message()
                 self.logger.debug('topic: {} payload: {}'.format(
                     msg.publish_packet.variable_header.topic_name,
                     msg.publish_packet.payload.data
                 ))
                 if msg.publish_packet.variable_header.topic_name == TimerMqttService.COMMAND_TOPIC:
+                    # process if on the command topic
                     await asyncio.sleep(0)
                     data = json.loads(msg.publish_packet.payload.data.decode('utf-8'))
-                    self.logger.debug("data: {}".format(data))
+                    self.logger.debug("mqtt packet: {}".format(data))
                     await self.command_queue.put(data)
-                    self.logger.debug("pushing data to the queue size is {}".format(self.command_queue.qsize()))
             except:
                 pass
 
@@ -169,6 +174,7 @@ class TimerMqttService:
         self.logger.debug("start consumer")
         while self.running:
             self.logger.debug("waiting for queue item")
+            # wait for incoming queue items
             item = await self.command_queue.get()
             self.logger.debug("got queue item: {}".format(item))
 
@@ -212,7 +218,11 @@ class TimerMqttService:
         if self.device:
             self.device.disconnect()
 
-    def run_mqtt(self):
+    def _run_mqtt(self):
+        """Start MQTT service and other notify loops
+
+        :return:
+        """
 
         cors = asyncio.wait([
             self._consumer(),
