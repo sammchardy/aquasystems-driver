@@ -175,7 +175,8 @@ class TimerService(ServiceBase):
             raise RuntimeError('Failed to find expected Battery service!')
 
         # init notify functions
-        self._init_notify()
+        if self._notify_callback:
+            self._init_notify()
 
     def _init_notify(self):
 
