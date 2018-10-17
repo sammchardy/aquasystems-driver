@@ -109,6 +109,9 @@ class TimerMqttService:
 
             if command['cmd'] == 'set':
                 setattr(self.timer_service, command['item'], command['value'])
+                # make sure we push an update
+                data = {'cmd': 'get', 'item': 'all'}
+                await self.command_queue.put(data)
             elif command['cmd'] == 'get':
                 await self.publish_item(command['item'])
         except Exception as e:
