@@ -155,13 +155,13 @@ class TimerService(ServiceBase):
         }
     }
 
-    # Configure expected services and characteristics for the UART service.
+    # Configure expected services and characteristics for the  service.
     ADVERTISED = [TIMER_SERVICE_UUID]
     SERVICES = [TIMER_SERVICE_UUID, BATTERY_SERVICE_UUID]
     CHARACTERISTICS = [CYCLE1_DUR_CHAR_UUID, TIME_CHAR_UUID]
 
     def __init__(self, device):
-        """Initialize Timer from provided bluez device."""
+        """Initialize Timer from provided device."""
         self.device = device
         # Find the Timer service and characteristics associated with the device.
         self._timer = self.device.find_service(TIMER_SERVICE_UUID)
@@ -218,7 +218,7 @@ class TimerService(ServiceBase):
         return self._write_attr(attr, value)
 
     def _write_attr(self, attr, value):
-        """
+        """Helper function to write an attribute using related format array
 
         :param attr:
         :param value:
@@ -254,6 +254,10 @@ class TimerService(ServiceBase):
 
     @property
     def on(self):
+        """On property function to convert to True/False
+
+        :return:
+        """
         # use getattr helper
         val = self.__getattr__('on')
         if val == 1:
@@ -262,7 +266,8 @@ class TimerService(ServiceBase):
 
     @property
     def manual_time_left(self):
-        """
+        """ Manual time left returns value if in manual mode
+
         'i\x03\x00\x00\x05' - off
         'i\x03\x01\x00\x05' - on 5 mins
         'i\x03\x01\x00\n' - on 10 mins
