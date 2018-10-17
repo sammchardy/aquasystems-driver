@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import json
 import logging
 import Adafruit_BluefruitLE
@@ -37,6 +38,8 @@ class TimerMqttService:
         self.mqtt_client = MQTTClient()
         self.device_name = device_name
         self.loop = asyncio.get_event_loop()
+        self._public_all_call_later = None
+        self._notify_state = {}
 
         self.command_queue = asyncio.Queue(loop=self.loop)
 
@@ -85,18 +88,52 @@ class TimerMqttService:
             TimerService.discover(self.device)
 
             self.logger.debug('Creating device')
-            self.timer_service = TimerService(self.device)
+            self.timer_service = TimerService(self.device, notify_callback=self.notify_callback)
         except Exception as e:
             self.logger.error("got error: {}".format(e))
 
         # now do things
         self._run_mqtt()
 
+    def callback_to_coroutine(self, coro):
+        """Convert a callback to a coroutine
+
+        :param coro:
+        :return:
+        """
+        asyncio.ensure_future(coro(), loop=self.loop)
+
+    def notify_callback(self, item, value):
+        self._notify_state[item] = value
+        self.logger.debug("got notify value {} for {}".format(value, item))
+        if self._public_all_call_later:
+            self.logger.debug("cancel all_call_later")
+            self._public_all_call_later.cancel()
+        self._public_all_call_later = self.loop.call_later(
+            1,
+            self.callback_to_coroutine,
+            self.publish_notify_state
+        )
+
+    async def publish_notify_state(self):
+        self.logger.debug("publishing notify state")
+        topic = TimerMqttService.INFO_TOPIC
+        await self.mqtt_client.publish(
+            topic,
+            json.dumps(self._notify_state).encode("utf-8"),
+            qos=QOS_1
+        )
+
     def stop(self):
         """Stop the service
 
         """
         self.running = False
+
+    async def put_get_all(self):
+        self.logger.debug("put get all")
+        data = {'cmd': 'get', 'item': 'all'}
+        await self.command_queue.put(data)
 
     async def process_command(self, command):
         """Process a command
@@ -114,8 +151,7 @@ class TimerMqttService:
             if command['cmd'] == 'set':
                 setattr(self.timer_service, command['item'], command['value'])
                 # make sure we push an update
-                data = {'cmd': 'get', 'item': 'all'}
-                await self.command_queue.put(data)
+                #await self.put_get_all()
             elif command['cmd'] == 'get':
                 await self.publish_item(command['item'])
         except Exception as e:
@@ -208,8 +244,7 @@ class TimerMqttService:
         self.logger.debug("start all notify")
         while self.running:
             await asyncio.sleep(0)
-            data = {'cmd': 'get', 'item': 'all'}
-            await self.command_queue.put(data)
+            await self.put_get_all()
 
             # wait for 10 minutes
             await asyncio.sleep(60 * self.battery_notify_interval)
