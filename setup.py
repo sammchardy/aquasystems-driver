@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='aquasystems-driver',
-    version='0.0.1',
+    version='0.0.2',
     packages=['aquasystems'],
     description='MQTT Bluetooth Service for Aqua Systems Tap Timer',
     url='https://github.com/sammchardy/aquasystems-driver',
